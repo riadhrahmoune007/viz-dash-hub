@@ -1,9 +1,55 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import DashboardSidebar from '@/components/DashboardSidebar';
 import DashboardHeader from '@/components/DashboardHeader';
+import FilterBar from '@/components/FilterBar';
+import { toast } from '@/components/ui/use-toast';
 
 const Reports: React.FC = () => {
+  const [filters, setFilters] = useState<Record<string, any>>({});
+
+  const filterOptions = [
+    {
+      id: 'reportType',
+      label: 'Report Type',
+      type: 'select' as const,
+      options: ['Analytics', 'Patient Outcomes', 'Treatments', 'Performance']
+    },
+    {
+      id: 'dateRange',
+      label: 'Date Range',
+      type: 'select' as const,
+      options: ['Last Week', 'Last Month', 'Last Quarter', 'Last Year', 'All Time']
+    },
+    {
+      id: 'onlyPdf',
+      label: 'PDF Only',
+      type: 'boolean' as const
+    }
+  ];
+
+  const handleFilterChange = (newFilters: Record<string, any>) => {
+    setFilters(newFilters);
+    if (Object.keys(newFilters).length > 0) {
+      toast({
+        title: "Report filters applied",
+        description: `Applied ${Object.keys(newFilters).length} filters to reports.`,
+      });
+    }
+  };
+
+  // Filter reports based on active filters
+  const reports = ['Monthly Analytics', 'Patient Outcomes', 'Treatment Efficacy', 'Regional Performance']
+    .filter(report => {
+      if (filters.reportType) {
+        if (filters.reportType === 'Analytics' && !report.includes('Analytics')) return false;
+        if (filters.reportType === 'Patient Outcomes' && !report.includes('Patient')) return false;
+        if (filters.reportType === 'Treatments' && !report.includes('Treatment')) return false;
+        if (filters.reportType === 'Performance' && !report.includes('Performance')) return false;
+      }
+      return true;
+    });
+
   return (
     <div className="flex h-screen bg-gray-50">
       <DashboardSidebar />
@@ -15,14 +61,20 @@ const Reports: React.FC = () => {
             className="mb-6"
           />
           
+          <FilterBar 
+            onFilterChange={handleFilterChange}
+            filterOptions={filterOptions}
+            className="mb-6"
+          />
+          
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Report Cards */}
-            {['Monthly Analytics', 'Patient Outcomes', 'Treatment Efficacy', 'Regional Performance'].map((report, index) => (
+            {reports.map((report, index) => (
               <div key={index} className="bg-white p-5 rounded-lg shadow">
                 <div className="flex items-start justify-between">
                   <div>
                     <h3 className="text-lg font-medium">{report}</h3>
-                    <p className="text-sm text-gray-500 mt-1">Last updated: May 1, 2024</p>
+                    <p className="text-sm text-gray-500 mt-1">Last updated: May 1, 2025</p>
                   </div>
                   <span className="bg-blue-100 text-blue-800 text-xs font-medium px-2.5 py-0.5 rounded">PDF</span>
                 </div>

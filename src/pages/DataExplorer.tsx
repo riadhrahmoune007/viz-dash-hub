@@ -3,10 +3,48 @@ import React, { useState } from 'react';
 import DashboardSidebar from '@/components/DashboardSidebar';
 import DashboardHeader from '@/components/DashboardHeader';
 import DataOverviewCard from '@/components/DataOverviewCard';
+import FilterBar from '@/components/FilterBar';
 import { dataOverview } from '@/data/mockData';
+import { toast } from '@/components/ui/use-toast';
 
 const DataExplorer: React.FC = () => {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [filters, setFilters] = useState<Record<string, any>>({});
+
+  const filterOptions = [
+    {
+      id: 'dataType',
+      label: 'Data Type',
+      type: 'select' as const,
+      options: ['Numeric', 'Categorical', 'Text', 'Date', 'Boolean']
+    },
+    {
+      id: 'missingValues',
+      label: 'Missing Values',
+      type: 'range' as const,
+      range: [0, 100]
+    },
+    {
+      id: 'onlyFavorite',
+      label: 'Only Favorites',
+      type: 'boolean' as const
+    },
+    {
+      id: 'lastUpdated',
+      label: 'Last Updated',
+      type: 'date' as const
+    }
+  ];
+
+  const handleFilterChange = (newFilters: Record<string, any>) => {
+    setFilters(newFilters);
+    if (Object.keys(newFilters).length > 0) {
+      toast({
+        title: "Filters applied",
+        description: `Applied ${Object.keys(newFilters).length} filters to data.`,
+      });
+    }
+  };
 
   return (
     <div className="flex h-screen bg-gray-50">
@@ -16,6 +54,12 @@ const DataExplorer: React.FC = () => {
         <div className="p-6 overflow-y-auto">
           <DashboardHeader 
             title="Data Explorer" 
+            className="mb-6"
+          />
+          
+          <FilterBar 
+            onFilterChange={handleFilterChange}
+            filterOptions={filterOptions}
             className="mb-6"
           />
           

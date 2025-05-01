@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Heatmap, ResponsiveContainer } from 'recharts';
+import { ResponsiveContainer } from 'recharts';
 
 interface TrafficHeatmapProps {
   title: string;

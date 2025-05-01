@@ -2,6 +2,7 @@
 import React from "react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { Link } from "react-router-dom";
 import {
   LayoutDashboard,
   BarChart2,
@@ -42,9 +43,12 @@ export function DashboardSidebar({ className, isCollapsed = false }: SidebarProp
               "justify-start",
               !isCollapsed ? "px-2" : "justify-center px-0"
             )}
+            asChild
           >
-            <LayoutDashboard className="h-4 w-4 mr-2" />
-            {!isCollapsed && <span>Dashboard</span>}
+            <Link to="/">
+              <LayoutDashboard className="h-4 w-4 mr-2" />
+              {!isCollapsed && <span>Dashboard</span>}
+            </Link>
           </Button>
           
           <Button
@@ -53,9 +57,12 @@ export function DashboardSidebar({ className, isCollapsed = false }: SidebarProp
               "justify-start",
               !isCollapsed ? "px-2" : "justify-center px-0"
             )}
+            asChild
           >
-            <Database className="h-4 w-4 mr-2" />
-            {!isCollapsed && <span>Data Explorer</span>}
+            <Link to="/data-explorer">
+              <Database className="h-4 w-4 mr-2" />
+              {!isCollapsed && <span>Data Explorer</span>}
+            </Link>
           </Button>
           
           <Button
@@ -64,9 +71,12 @@ export function DashboardSidebar({ className, isCollapsed = false }: SidebarProp
               "justify-start",
               !isCollapsed ? "px-2" : "justify-center px-0"
             )}
+            asChild
           >
-            <BarChart2 className="h-4 w-4 mr-2" />
-            {!isCollapsed && <span>Visualizations</span>}
+            <Link to="/visualizations">
+              <BarChart2 className="h-4 w-4 mr-2" />
+              {!isCollapsed && <span>Visualizations</span>}
+            </Link>
           </Button>
           
           <Button
@@ -75,9 +85,12 @@ export function DashboardSidebar({ className, isCollapsed = false }: SidebarProp
               "justify-start",
               !isCollapsed ? "px-2" : "justify-center px-0"
             )}
+            asChild
           >
-            <BrainCircuit className="h-4 w-4 mr-2" />
-            {!isCollapsed && <span>ML Models</span>}
+            <Link to="/ml-models">
+              <BrainCircuit className="h-4 w-4 mr-2" />
+              {!isCollapsed && <span>ML Models</span>}
+            </Link>
           </Button>
 
           <Separator className="my-2" />

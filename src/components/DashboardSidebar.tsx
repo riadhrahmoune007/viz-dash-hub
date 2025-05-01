@@ -2,7 +2,7 @@
 import React from "react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import {
   LayoutDashboard,
   BarChart2,
@@ -22,6 +22,13 @@ interface SidebarProps extends React.HTMLAttributes<HTMLDivElement> {
 }
 
 export function DashboardSidebar({ className, isCollapsed = false }: SidebarProps) {
+  const location = useLocation();
+  
+  // Helper function to check if a path is active
+  const isActive = (path: string) => {
+    return location.pathname === path;
+  };
+
   return (
     <div
       className={cn(
@@ -38,10 +45,11 @@ export function DashboardSidebar({ className, isCollapsed = false }: SidebarProp
       <div className="flex-1 overflow-auto py-2">
         <nav className="grid gap-1 px-2">
           <Button
-            variant="ghost"
+            variant={isActive('/') ? "default" : "ghost"}
             className={cn(
               "justify-start",
-              !isCollapsed ? "px-2" : "justify-center px-0"
+              !isCollapsed ? "px-2" : "justify-center px-0",
+              isActive('/') && "bg-blue-600 text-white hover:bg-blue-700"
             )}
             asChild
           >
@@ -52,10 +60,11 @@ export function DashboardSidebar({ className, isCollapsed = false }: SidebarProp
           </Button>
           
           <Button
-            variant="ghost"
+            variant={isActive('/data-explorer') ? "default" : "ghost"}
             className={cn(
               "justify-start",
-              !isCollapsed ? "px-2" : "justify-center px-0"
+              !isCollapsed ? "px-2" : "justify-center px-0",
+              isActive('/data-explorer') && "bg-blue-600 text-white hover:bg-blue-700"
             )}
             asChild
           >
@@ -66,10 +75,11 @@ export function DashboardSidebar({ className, isCollapsed = false }: SidebarProp
           </Button>
           
           <Button
-            variant="ghost"
+            variant={isActive('/visualizations') ? "default" : "ghost"}
             className={cn(
               "justify-start",
-              !isCollapsed ? "px-2" : "justify-center px-0"
+              !isCollapsed ? "px-2" : "justify-center px-0",
+              isActive('/visualizations') && "bg-blue-600 text-white hover:bg-blue-700"
             )}
             asChild
           >
@@ -80,10 +90,11 @@ export function DashboardSidebar({ className, isCollapsed = false }: SidebarProp
           </Button>
           
           <Button
-            variant="ghost"
+            variant={isActive('/ml-models') ? "default" : "ghost"}
             className={cn(
               "justify-start",
-              !isCollapsed ? "px-2" : "justify-center px-0"
+              !isCollapsed ? "px-2" : "justify-center px-0",
+              isActive('/ml-models') && "bg-blue-600 text-white hover:bg-blue-700"
             )}
             asChild
           >
@@ -96,36 +107,48 @@ export function DashboardSidebar({ className, isCollapsed = false }: SidebarProp
           <Separator className="my-2" />
           
           <Button
-            variant="ghost"
+            variant={isActive('/upload-data') ? "default" : "ghost"}
             className={cn(
               "justify-start",
-              !isCollapsed ? "px-2" : "justify-center px-0"
+              !isCollapsed ? "px-2" : "justify-center px-0",
+              isActive('/upload-data') && "bg-blue-600 text-white hover:bg-blue-700"
             )}
+            asChild
           >
-            <Upload className="h-4 w-4 mr-2" />
-            {!isCollapsed && <span>Upload Data</span>}
+            <Link to="/upload-data">
+              <Upload className="h-4 w-4 mr-2" />
+              {!isCollapsed && <span>Upload Data</span>}
+            </Link>
           </Button>
           
           <Button
-            variant="ghost"
+            variant={isActive('/reports') ? "default" : "ghost"}
             className={cn(
               "justify-start",
-              !isCollapsed ? "px-2" : "justify-center px-0"
+              !isCollapsed ? "px-2" : "justify-center px-0",
+              isActive('/reports') && "bg-blue-600 text-white hover:bg-blue-700"
             )}
+            asChild
           >
-            <FileText className="h-4 w-4 mr-2" />
-            {!isCollapsed && <span>Reports</span>}
+            <Link to="/reports">
+              <FileText className="h-4 w-4 mr-2" />
+              {!isCollapsed && <span>Reports</span>}
+            </Link>
           </Button>
           
           <Button
-            variant="ghost"
+            variant={isActive('/team') ? "default" : "ghost"}
             className={cn(
               "justify-start",
-              !isCollapsed ? "px-2" : "justify-center px-0"
+              !isCollapsed ? "px-2" : "justify-center px-0",
+              isActive('/team') && "bg-blue-600 text-white hover:bg-blue-700"
             )}
+            asChild
           >
-            <Users className="h-4 w-4 mr-2" />
-            {!isCollapsed && <span>Team</span>}
+            <Link to="/team">
+              <Users className="h-4 w-4 mr-2" />
+              {!isCollapsed && <span>Team</span>}
+            </Link>
           </Button>
         </nav>
       </div>
@@ -134,25 +157,33 @@ export function DashboardSidebar({ className, isCollapsed = false }: SidebarProp
         <Separator className="my-2" />
         <nav className="grid gap-1">
           <Button
-            variant="ghost"
+            variant={isActive('/settings') ? "default" : "ghost"}
             className={cn(
               "justify-start",
-              !isCollapsed ? "px-2" : "justify-center px-0"
+              !isCollapsed ? "px-2" : "justify-center px-0",
+              isActive('/settings') && "bg-blue-600 text-white hover:bg-blue-700"
             )}
+            asChild
           >
-            <Settings className="h-4 w-4 mr-2" />
-            {!isCollapsed && <span>Settings</span>}
+            <Link to="/settings">
+              <Settings className="h-4 w-4 mr-2" />
+              {!isCollapsed && <span>Settings</span>}
+            </Link>
           </Button>
           
           <Button
-            variant="ghost"
+            variant={isActive('/help') ? "default" : "ghost"}
             className={cn(
               "justify-start",
-              !isCollapsed ? "px-2" : "justify-center px-0"
+              !isCollapsed ? "px-2" : "justify-center px-0",
+              isActive('/help') && "bg-blue-600 text-white hover:bg-blue-700"
             )}
+            asChild
           >
-            <HelpCircle className="h-4 w-4 mr-2" />
-            {!isCollapsed && <span>Help</span>}
+            <Link to="/help">
+              <HelpCircle className="h-4 w-4 mr-2" />
+              {!isCollapsed && <span>Help</span>}
+            </Link>
           </Button>
         </nav>
       </div>

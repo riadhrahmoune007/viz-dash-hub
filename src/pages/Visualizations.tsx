@@ -36,7 +36,7 @@ const Visualizations: React.FC = () => {
       id: 'dataPoints',
       label: 'Data Points',
       type: 'range' as const,
-      range: [10, 100]
+      range: [10, 100] as [number, number]
     }
   ];
 

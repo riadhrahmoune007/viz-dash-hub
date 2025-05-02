@@ -22,7 +22,7 @@ const DataExplorer: React.FC = () => {
       id: 'missingValues',
       label: 'Missing Values',
       type: 'range' as const,
-      range: [0, 100]
+      range: [0, 100] as [number, number]
     },
     {
       id: 'onlyFavorite',

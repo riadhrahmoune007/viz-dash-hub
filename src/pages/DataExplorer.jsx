@@ -6,11 +6,12 @@ import DataOverviewCard from '@/components/DataOverviewCard';
 import FilterBar from '@/components/FilterBar';
 import { toast } from '@/components/ui/use-toast';
 import { useData } from '@/context/DataContext';
+import { Skeleton } from "@/components/ui/skeleton";
 
 const DataExplorer = () => {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [filters, setFilters] = useState({});
-  const { dataOverview, isUsingDefaultData } = useData();
+  const { dataOverview, isUsingDefaultData, isLoading } = useData();
 
   const filterOptions = [
     {
@@ -58,7 +59,7 @@ const DataExplorer = () => {
             className="mb-6"
           />
           
-          {isUsingDefaultData && (
+          {isUsingDefaultData && !isLoading && (
             <div className="bg-amber-50 border-l-4 border-amber-400 p-4 mb-6">
               <div className="flex">
                 <div className="flex-shrink-0">
@@ -68,7 +69,7 @@ const DataExplorer = () => {
                 </div>
                 <div className="ml-3">
                   <p className="text-sm text-amber-700">
-                    Currently displaying default demonstration data. Upload your own data in the "Upload Data" section to explore your custom dataset.
+                    Currently displaying default demonstration data. Upload your own data in the "Upload Data" section or check the Supabase database connection.
                   </p>
                 </div>
               </div>
@@ -82,42 +83,68 @@ const DataExplorer = () => {
           />
           
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {dataOverview && (
-              <DataOverviewCard 
-                totalRows={dataOverview.totalRows}
-                totalColumns={dataOverview.totalColumns}
-                missingValues={dataOverview.missingValues}
-                duplicates={dataOverview.duplicates}
-                numericColumns={dataOverview.numericColumns}
-                categoricalColumns={dataOverview.categoricalColumns}
-              />
+            {isLoading ? (
+              // Loading state
+              <>
+                <div className="bg-white p-5 rounded-lg shadow">
+                  <Skeleton className="h-8 w-1/3 mb-4" />
+                  <div className="space-y-4">
+                    <Skeleton className="h-6 w-full" />
+                    <Skeleton className="h-6 w-full" />
+                    <Skeleton className="h-6 w-full" />
+                    <Skeleton className="h-6 w-full" />
+                    <Skeleton className="h-6 w-full" />
+                  </div>
+                </div>
+                <div className="bg-white p-5 rounded-lg shadow">
+                  <Skeleton className="h-8 w-1/3 mb-4" />
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                    <Skeleton className="h-32 w-full" />
+                    <Skeleton className="h-32 w-full" />
+                  </div>
+                </div>
+              </>
+            ) : (
+              // Data content
+              <>
+                {dataOverview && (
+                  <DataOverviewCard 
+                    totalRows={dataOverview.totalRows}
+                    totalColumns={dataOverview.totalColumns}
+                    missingValues={dataOverview.missingValues}
+                    duplicates={dataOverview.duplicates}
+                    numericColumns={dataOverview.numericColumns}
+                    categoricalColumns={dataOverview.categoricalColumns}
+                  />
+                )}
+                
+                <div className="bg-white p-5 rounded-lg shadow">
+                  <h2 className="text-lg font-medium mb-4">Dataset Columns</h2>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                    <div className="bg-gray-50 p-3 rounded">
+                      <h3 className="text-sm font-medium text-gray-700">Numeric Features</h3>
+                      <ul className="mt-2 text-sm">
+                        <li>Age</li>
+                        <li>Blood Pressure</li>
+                        <li>Cholesterol</li>
+                        <li>Heart Rate</li>
+                        <li>Diabetes Risk Score</li>
+                      </ul>
+                    </div>
+                    <div className="bg-gray-50 p-3 rounded">
+                      <h3 className="text-sm font-medium text-gray-700">Categorical Features</h3>
+                      <ul className="mt-2 text-sm">
+                        <li>Gender</li>
+                        <li>Treatment Type</li>
+                        <li>Patient Status</li>
+                        <li>Region</li>
+                        <li>Satisfaction Score</li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+              </>
             )}
-            
-            <div className="bg-white p-5 rounded-lg shadow">
-              <h2 className="text-lg font-medium mb-4">Dataset Columns</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                <div className="bg-gray-50 p-3 rounded">
-                  <h3 className="text-sm font-medium text-gray-700">Numeric Features</h3>
-                  <ul className="mt-2 text-sm">
-                    <li>Age</li>
-                    <li>Blood Pressure</li>
-                    <li>Cholesterol</li>
-                    <li>Heart Rate</li>
-                    <li>Diabetes Risk Score</li>
-                  </ul>
-                </div>
-                <div className="bg-gray-50 p-3 rounded">
-                  <h3 className="text-sm font-medium text-gray-700">Categorical Features</h3>
-                  <ul className="mt-2 text-sm">
-                    <li>Gender</li>
-                    <li>Treatment Type</li>
-                    <li>Patient Status</li>
-                    <li>Region</li>
-                    <li>Satisfaction Score</li>
-                  </ul>
-                </div>
-              </div>
-            </div>
           </div>
         </div>
       </div>

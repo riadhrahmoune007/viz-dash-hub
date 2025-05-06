@@ -6,8 +6,10 @@ import {
   LineChartData, 
   HeatmapData
 } from '@/data/mockData';
+import databaseService from '@/services/databaseService';
+import { useQuery } from '@tanstack/react-query';
 
-// Define the types that were missing in mockData.ts
+// Define types
 type TrafficHeatmapData = [number, number, number];
 
 interface DataOverviewType {
@@ -50,6 +52,8 @@ interface DataContextType {
   mlModelMetrics: MLModelMetricsType | null;
   updateDataFromUpload: (fileData: any) => void;
   isUsingDefaultData: boolean;
+  isLoading: boolean;
+  error: Error | null;
 }
 
 // Create the context with default values
@@ -80,9 +84,100 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [dataOverview, setDataOverview] = useState(defaultDataOverview);
   const [mlModelMetrics, setMlModelMetrics] = useState(defaultMlModelMetrics);
   const [isUsingDefaultData, setIsUsingDefaultData] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<Error | null>(null);
+
+  // Fetch data from database
+  const fetchDataFromDatabase = async () => {
+    try {
+      setIsLoading(true);
+      
+      // Fetch KPI data
+      const kpiDataFromDb = await databaseService.getKpiData();
+      if (kpiDataFromDb && kpiDataFromDb.length > 0) {
+        setChartData(prevData => ({ ...prevData, kpiData: kpiDataFromDb }));
+      }
+      
+      // Fetch treatment type data
+      const treatmentTypeDataFromDb = await databaseService.getTreatmentTypeData();
+      if (treatmentTypeDataFromDb && treatmentTypeDataFromDb.length > 0) {
+        setChartData(prevData => ({ 
+          ...prevData, 
+          treatmentTypeData: treatmentTypeDataFromDb as ChartData[] 
+        }));
+      }
+      
+      // Fetch monthly trend data
+      const monthlyTrendDataFromDb = await databaseService.getMonthlyTrendData();
+      if (monthlyTrendDataFromDb && monthlyTrendDataFromDb.length > 0) {
+        setChartData(prevData => ({ 
+          ...prevData, 
+          monthlyTrendData: monthlyTrendDataFromDb as LineChartData[] 
+        }));
+      }
+      
+      // Fetch risk matrix data
+      const riskMatrixDataFromDb = await databaseService.getRiskMatrixData();
+      if (riskMatrixDataFromDb && riskMatrixDataFromDb.length > 0) {
+        setChartData(prevData => ({ 
+          ...prevData, 
+          riskMatrixData: riskMatrixDataFromDb as HeatmapData[] 
+        }));
+      }
+      
+      // Fetch traffic heatmap data
+      const trafficHeatmapDataFromDb = await databaseService.getTrafficHeatmapData();
+      if (trafficHeatmapDataFromDb && trafficHeatmapDataFromDb.length > 0) {
+        setChartData(prevData => ({ 
+          ...prevData, 
+          trafficHeatmapData: trafficHeatmapDataFromDb as TrafficHeatmapData[] 
+        }));
+      }
+      
+      // Fetch data overview
+      const dataOverviewFromDb = await databaseService.getDataOverview();
+      if (dataOverviewFromDb) {
+        setDataOverview(dataOverviewFromDb);
+      }
+      
+      // Fetch ML model metrics
+      const mlModelMetricsFromDb = await databaseService.getMlModelMetrics();
+      if (mlModelMetricsFromDb) {
+        setMlModelMetrics(mlModelMetricsFromDb);
+      }
+      
+      // If we got data from the database, we're no longer using default data
+      if (
+        kpiDataFromDb?.length > 0 ||
+        treatmentTypeDataFromDb?.length > 0 ||
+        monthlyTrendDataFromDb?.length > 0 ||
+        riskMatrixDataFromDb?.length > 0 ||
+        trafficHeatmapDataFromDb?.length > 0 ||
+        dataOverviewFromDb ||
+        mlModelMetricsFromDb
+      ) {
+        setIsUsingDefaultData(false);
+        toast({
+          title: "Data loaded from database",
+          description: "Your dashboard has been updated with data from Supabase",
+        });
+      }
+      
+      setIsLoading(false);
+    } catch (err) {
+      console.error("Error fetching data from database:", err);
+      setError(err instanceof Error ? err : new Error("Unknown error"));
+      setIsLoading(false);
+    }
+  };
+  
+  // Load data when component mounts
+  useEffect(() => {
+    fetchDataFromDatabase();
+  }, []);
 
   // Function to update data from uploaded file
-  const updateDataFromUpload = (fileData: any) => {
+  const updateDataFromUpload = async (fileData: any) => {
     try {
       console.log("Processing uploaded data:", fileData);
       
@@ -124,9 +219,12 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       setIsUsingDefaultData(false);
       
+      // Save the data to the database
+      await databaseService.saveUploadedData(fileData);
+      
       toast({
         title: "Data updated successfully",
-        description: "Dashboard has been updated with your uploaded data",
+        description: "Dashboard has been updated with your uploaded data and saved to database",
       });
     } catch (error) {
       console.error("Error processing data:", error);
@@ -144,7 +242,9 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     dataOverview,
     mlModelMetrics,
     updateDataFromUpload,
-    isUsingDefaultData
+    isUsingDefaultData,
+    isLoading,
+    error
   };
 
   return (

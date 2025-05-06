@@ -8,6 +8,7 @@ import {
 } from '@/data/mockData';
 import databaseService from '@/services/databaseService';
 import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/services/supabaseClient';
 
 // Define types
 type TrafficHeatmapData = [number, number, number];
@@ -54,6 +55,7 @@ interface DataContextType {
   isUsingDefaultData: boolean;
   isLoading: boolean;
   error: Error | null;
+  supbaseConnected: boolean;
 }
 
 // Create the context with default values
@@ -86,83 +88,114 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [isUsingDefaultData, setIsUsingDefaultData] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
+  const [supbaseConnected, setSupabaseConnected] = useState(false);
+
+  // Check Supabase connection
+  useEffect(() => {
+    const checkSupabaseConnection = async () => {
+      try {
+        // Simple ping to check connection
+        const { data, error } = await supabase.from('kpi_data').select('count').limit(1);
+        if (!error) {
+          setSupabaseConnected(true);
+          console.log('Supabase connection successful');
+        } else {
+          console.error('Supabase connection error:', error);
+          toast({
+            title: "Database Connection Error",
+            description: "Using fallback data. Check Supabase configuration.",
+            variant: "destructive",
+          });
+        }
+      } catch (err) {
+        console.error('Failed to check Supabase connection:', err);
+      }
+    };
+    
+    checkSupabaseConnection();
+  }, []);
 
   // Fetch data from database
   const fetchDataFromDatabase = async () => {
     try {
       setIsLoading(true);
       
-      // Fetch KPI data
-      const kpiDataFromDb = await databaseService.getKpiData();
-      if (kpiDataFromDb && kpiDataFromDb.length > 0) {
-        setChartData(prevData => ({ ...prevData, kpiData: kpiDataFromDb }));
-      }
-      
-      // Fetch treatment type data
-      const treatmentTypeDataFromDb = await databaseService.getTreatmentTypeData();
-      if (treatmentTypeDataFromDb && treatmentTypeDataFromDb.length > 0) {
-        setChartData(prevData => ({ 
-          ...prevData, 
-          treatmentTypeData: treatmentTypeDataFromDb as ChartData[] 
-        }));
-      }
-      
-      // Fetch monthly trend data
-      const monthlyTrendDataFromDb = await databaseService.getMonthlyTrendData();
-      if (monthlyTrendDataFromDb && monthlyTrendDataFromDb.length > 0) {
-        setChartData(prevData => ({ 
-          ...prevData, 
-          // Line data items already match the expected format, no need for casting
-          monthlyTrendData: monthlyTrendDataFromDb as unknown as LineChartData[]
-        }));
-      }
-      
-      // Fetch risk matrix data
-      const riskMatrixDataFromDb = await databaseService.getRiskMatrixData();
-      if (riskMatrixDataFromDb && riskMatrixDataFromDb.length > 0) {
-        setChartData(prevData => ({ 
-          ...prevData, 
-          // Heatmap data items already match the expected format, no need for casting
-          riskMatrixData: riskMatrixDataFromDb as unknown as HeatmapData[]
-        }));
-      }
-      
-      // Fetch traffic heatmap data
-      const trafficHeatmapDataFromDb = await databaseService.getTrafficHeatmapData();
-      if (trafficHeatmapDataFromDb && trafficHeatmapDataFromDb.length > 0) {
-        setChartData(prevData => ({ 
-          ...prevData, 
-          trafficHeatmapData: trafficHeatmapDataFromDb as TrafficHeatmapData[] 
-        }));
-      }
-      
-      // Fetch data overview
-      const dataOverviewFromDb = await databaseService.getDataOverview();
-      if (dataOverviewFromDb) {
-        setDataOverview(dataOverviewFromDb);
-      }
-      
-      // Fetch ML model metrics
-      const mlModelMetricsFromDb = await databaseService.getMlModelMetrics();
-      if (mlModelMetricsFromDb) {
-        setMlModelMetrics(mlModelMetricsFromDb);
-      }
-      
-      // If we got data from the database, we're no longer using default data
-      if (
-        kpiDataFromDb?.length > 0 ||
-        treatmentTypeDataFromDb?.length > 0 ||
-        monthlyTrendDataFromDb?.length > 0 ||
-        riskMatrixDataFromDb?.length > 0 ||
-        trafficHeatmapDataFromDb?.length > 0 ||
-        dataOverviewFromDb ||
-        mlModelMetricsFromDb
-      ) {
-        setIsUsingDefaultData(false);
-        toast({
-          title: "Data loaded from database",
-          description: "Your dashboard has been updated with data from Supabase",
-        });
+      // Only try to fetch data if Supabase is connected
+      if (supbaseConnected) {
+        // Fetch KPI data
+        const kpiDataFromDb = await databaseService.getKpiData();
+        if (kpiDataFromDb && kpiDataFromDb.length > 0) {
+          setChartData(prevData => ({ ...prevData, kpiData: kpiDataFromDb }));
+        }
+        
+        // Fetch treatment type data
+        const treatmentTypeDataFromDb = await databaseService.getTreatmentTypeData();
+        if (treatmentTypeDataFromDb && treatmentTypeDataFromDb.length > 0) {
+          setChartData(prevData => ({ 
+            ...prevData, 
+            treatmentTypeData: treatmentTypeDataFromDb as ChartData[] 
+          }));
+        }
+        
+        // Fetch monthly trend data
+        const monthlyTrendDataFromDb = await databaseService.getMonthlyTrendData();
+        if (monthlyTrendDataFromDb && monthlyTrendDataFromDb.length > 0) {
+          setChartData(prevData => ({ 
+            ...prevData, 
+            // Line data items already match the expected format, no need for casting
+            monthlyTrendData: monthlyTrendDataFromDb as unknown as LineChartData[]
+          }));
+        }
+        
+        // Fetch risk matrix data
+        const riskMatrixDataFromDb = await databaseService.getRiskMatrixData();
+        if (riskMatrixDataFromDb && riskMatrixDataFromDb.length > 0) {
+          setChartData(prevData => ({ 
+            ...prevData, 
+            // Heatmap data items already match the expected format, no need for casting
+            riskMatrixData: riskMatrixDataFromDb as unknown as HeatmapData[]
+          }));
+        }
+        
+        // Fetch traffic heatmap data
+        const trafficHeatmapDataFromDb = await databaseService.getTrafficHeatmapData();
+        if (trafficHeatmapDataFromDb && trafficHeatmapDataFromDb.length > 0) {
+          setChartData(prevData => ({ 
+            ...prevData, 
+            trafficHeatmapData: trafficHeatmapDataFromDb as TrafficHeatmapData[] 
+          }));
+        }
+        
+        // Fetch data overview
+        const dataOverviewFromDb = await databaseService.getDataOverview();
+        if (dataOverviewFromDb) {
+          setDataOverview(dataOverviewFromDb);
+        }
+        
+        // Fetch ML model metrics
+        const mlModelMetricsFromDb = await databaseService.getMlModelMetrics();
+        if (mlModelMetricsFromDb) {
+          setMlModelMetrics(mlModelMetricsFromDb);
+        }
+        
+        // If we got data from the database, we're no longer using default data
+        if (
+          kpiDataFromDb?.length > 0 ||
+          treatmentTypeDataFromDb?.length > 0 ||
+          monthlyTrendDataFromDb?.length > 0 ||
+          riskMatrixDataFromDb?.length > 0 ||
+          trafficHeatmapDataFromDb?.length > 0 ||
+          dataOverviewFromDb ||
+          mlModelMetricsFromDb
+        ) {
+          setIsUsingDefaultData(false);
+          toast({
+            title: "Data loaded from database",
+            description: "Your dashboard has been updated with data from Supabase",
+          });
+        }
+      } else {
+        console.log('Using default data (Supabase not connected)');
       }
       
       setIsLoading(false);
@@ -176,7 +209,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // Load data when component mounts
   useEffect(() => {
     fetchDataFromDatabase();
-  }, []);
+  }, [supbaseConnected]); // Only refetch when connection status changes
 
   // Function to update data from uploaded file
   const updateDataFromUpload = async (fileData: any) => {
@@ -246,7 +279,8 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     updateDataFromUpload,
     isUsingDefaultData,
     isLoading,
-    error
+    error,
+    supbaseConnected
   };
 
   return (

@@ -112,7 +112,8 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (monthlyTrendDataFromDb && monthlyTrendDataFromDb.length > 0) {
         setChartData(prevData => ({ 
           ...prevData, 
-          monthlyTrendData: monthlyTrendDataFromDb as LineChartData[] 
+          // Line data items already match the expected format, no need for casting
+          monthlyTrendData: monthlyTrendDataFromDb as unknown as LineChartData[]
         }));
       }
       
@@ -121,7 +122,8 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (riskMatrixDataFromDb && riskMatrixDataFromDb.length > 0) {
         setChartData(prevData => ({ 
           ...prevData, 
-          riskMatrixData: riskMatrixDataFromDb as HeatmapData[] 
+          // Heatmap data items already match the expected format, no need for casting
+          riskMatrixData: riskMatrixDataFromDb as unknown as HeatmapData[]
         }));
       }
       

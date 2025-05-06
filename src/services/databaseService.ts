@@ -1,6 +1,11 @@
 
 import supabase from './supabaseClient';
 import { toast } from '@/components/ui/use-toast';
+import { 
+  ChartData, 
+  LineChartData,
+  HeatmapData
+} from '@/data/mockData';
 
 // Define types for database tables
 export interface KpiDataItem {
@@ -11,26 +16,23 @@ export interface KpiDataItem {
   isPositive: boolean;
 }
 
-export interface ChartDataItem {
-  name: string;
-  value: number;
-}
-
+// Updated to match LineChartData
 export interface LineDataItem {
   name: string;
-  patients: number;
-  treatments: number;
+  value: number;
 }
 
+// Updated to match HeatmapData
 export interface HeatmapDataItem {
-  x: string;
-  y: string;
-  value: number;
+  name: string;
+  riskLevel: 'Rare' | 'Unlikely' | 'Possible' | 'Likely' | 'Almost Certain';
+  impact: 'Insignificance' | 'Minor' | 'Moderate' | 'Major' | 'Extreme';
+  count: number;
 }
 
 interface DatabaseService {
   getKpiData: () => Promise<KpiDataItem[]>;
-  getTreatmentTypeData: () => Promise<ChartDataItem[]>;
+  getTreatmentTypeData: () => Promise<ChartData[]>;
   getMonthlyTrendData: () => Promise<LineDataItem[]>;
   getRiskMatrixData: () => Promise<HeatmapDataItem[]>;
   getTrafficHeatmapData: () => Promise<[number, number, number][]>;

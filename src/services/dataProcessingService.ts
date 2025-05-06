@@ -70,6 +70,24 @@ export const processCSV = (content: string): any => {
     }));
   }
   
+  // Process risk matrix data if columns exist
+  if (headers.includes('risk_level') && headers.includes('impact') && headers.includes('count')) {
+    const riskData = dataRows.filter(row => row.risk_level && row.impact && row.count);
+    result.chartData.riskMatrixData = riskData.map(row => ({
+      riskLevel: row.risk_level,
+      impact: row.impact,
+      count: parseInt(row.count)
+    }));
+  }
+  
+  // Process traffic heatmap data if day, hour, and value columns exist
+  if (headers.includes('day') && headers.includes('hour') && headers.includes('value')) {
+    const trafficData = dataRows.filter(row => row.day !== undefined && row.hour !== undefined && row.value !== undefined);
+    result.chartData.trafficHeatmapData = trafficData.map(row => {
+      return [parseInt(row.day), parseInt(row.hour), parseInt(row.value)] as [number, number, number];
+    });
+  }
+  
   // Update data overview metrics
   result.dataOverview.numericColumns = Math.round(numericCount / (result.dataOverview.totalRows || 1));
   result.dataOverview.categoricalColumns = Math.round(categoricalCount / (result.dataOverview.totalRows || 1));
@@ -98,10 +116,10 @@ export const processJSON = (content: any): any => {
     const result: Record<string, any> = {
       kpiData: content.kpiData || [],
       chartData: {
-        treatmentTypeData: content.treatmentTypeData || [],
-        monthlyTrendData: content.monthlyTrendData || [],
-        riskMatrixData: content.riskMatrixData || [],
-        trafficHeatmapData: content.trafficHeatmapData || []
+        treatmentTypeData: content.treatmentTypeData || content.chartData?.treatmentTypeData || [],
+        monthlyTrendData: content.monthlyTrendData || content.chartData?.monthlyTrendData || [],
+        riskMatrixData: content.riskMatrixData || content.chartData?.riskMatrixData || [],
+        trafficHeatmapData: content.trafficHeatmapData || content.chartData?.trafficHeatmapData || []
       },
       dataOverview: content.dataOverview || {
         totalRows: 0,

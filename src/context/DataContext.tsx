@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { toast } from '@/components/ui/use-toast';
 import { 
@@ -66,12 +67,15 @@ import {
 } from '@/data/mockData';
 
 export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  // Cast trafficHeatmapData to the expected type
+  const typedTrafficHeatmapData = trafficHeatmapData as unknown as TrafficHeatmapData[];
+  
   const [chartData, setChartData] = useState({
     kpiData,
     treatmentTypeData,
     monthlyTrendData,
     riskMatrixData,
-    trafficHeatmapData
+    trafficHeatmapData: typedTrafficHeatmapData
   });
   const [dataOverview, setDataOverview] = useState(defaultDataOverview);
   const [mlModelMetrics, setMlModelMetrics] = useState(defaultMlModelMetrics);
@@ -101,7 +105,8 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
           newChartData.riskMatrixData = fileData.chartData.riskMatrixData;
         }
         if (fileData.chartData.trafficHeatmapData) {
-          newChartData.trafficHeatmapData = fileData.chartData.trafficHeatmapData;
+          // Ensure proper type casting for trafficHeatmapData
+          newChartData.trafficHeatmapData = fileData.chartData.trafficHeatmapData as TrafficHeatmapData[];
         }
         
         setChartData(newChartData);

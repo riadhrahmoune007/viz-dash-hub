@@ -1,14 +1,40 @@
-
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { toast } from '@/components/ui/use-toast';
 import { 
   ChartData, 
   LineChartData, 
-  HeatmapData, 
-  TrafficHeatmapData,
-  DataOverviewType,
-  MLModelMetricsType
+  HeatmapData
 } from '@/data/mockData';
+
+// Define the types that were missing in mockData.ts
+type TrafficHeatmapData = [number, number, number];
+
+interface DataOverviewType {
+  totalRows: number;
+  totalColumns: number;
+  missingValues: number;
+  duplicates: number;
+  numericColumns: number;
+  categoricalColumns: number;
+}
+
+interface MLModelMetricsType {
+  regression: {
+    name: string;
+    target: string;
+    rmse: number;
+    r2: number;
+    mape: number;
+  };
+  classification: {
+    name: string;
+    target: string;
+    accuracy: number;
+    precision: number;
+    recall: number;
+    f1Score: number;
+  };
+}
 
 // Define the types for our context
 interface DataContextType {

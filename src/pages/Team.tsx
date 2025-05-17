@@ -6,12 +6,11 @@ import { Avatar } from '@/components/ui/avatar';
 
 const Team: React.FC = () => {
   const teamMembers = [
-    { name: 'Alex Johnson', role: 'Data Scientist', status: 'Online', image: null },
-    { name: 'Maria Garcia', role: 'Machine Learning Engineer', status: 'Away', image: null },
-    { name: 'David Kim', role: 'Data Analyst', status: 'Offline', image: null },
-    { name: 'Sarah Williams', role: 'Project Manager', status: 'Online', image: null },
-    { name: 'James Brown', role: 'Backend Developer', status: 'Online', image: null },
-    { name: 'Emily Chen', role: 'UX Researcher', status: 'Offline', image: null },
+    { name: 'Riadh Rahmoune', role: 'Data Scientist', status: 'Online', image: null },
+    { name: 'Youcef Ait', role: 'Machine Learning Engineer', status: 'Online', image: null },
+    { name: 'Dhiaeddine Khelil', role: 'Data Analyst', status: 'Away', image: null },
+    { name: 'Bahaeddine Lalmaya', role: 'Project Manager', status: 'Online', image: null },
+    { name: 'Nabil Abdeljabbar Lakrout', role: 'Backend Developer', status: 'Offline', image: null },
   ];
 
   return (

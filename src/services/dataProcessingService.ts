@@ -1,4 +1,3 @@
-
 // Process CSV data
 export const processCSV = (content: string): any => {
   const lines = content.trim().split('\n');
@@ -20,12 +19,15 @@ export const processCSV = (content: string): any => {
       numericColumns: 0,
       categoricalColumns: 0
     },
-    mlModelMetrics: null
+    mlModelMetrics: null,
+    columnData: {
+      numeric: [],
+      categorical: [],
+      date: [],
+      text: []
+    },
+    datasetColumns: headers
   };
-  
-  // Count column types
-  let numericCount = 0;
-  let categoricalCount = 0;
   
   // Process data rows
   const dataRows = lines.slice(1).map(line => {
@@ -36,14 +38,7 @@ export const processCSV = (content: string): any => {
       const value = values[index];
       row[header] = value;
       
-      // Check if value is numeric or categorical
-      if (!isNaN(parseFloat(value)) && isFinite(Number(value))) {
-        numericCount++;
-      } else {
-        categoricalCount++;
-      }
-      
-      // Count missing values
+      // Check if value is missing
       if (value === '' || value === undefined || value === null) {
         result.dataOverview.missingValues++;
       }
@@ -52,45 +47,92 @@ export const processCSV = (content: string): any => {
     return row;
   });
   
-  // Process treatment type data if column exists
-  if (headers.includes('treatment_type') && headers.includes('count')) {
-    const treatmentData = dataRows.filter(row => row.treatment_type && row.count);
-    result.chartData.treatmentTypeData = treatmentData.map(row => ({
-      name: row.treatment_type,
-      value: parseInt(row.count)
-    }));
-  }
+  // Analyze column types
+  const columnTypes: Record<string, string> = {};
+  const columnValues: Record<string, any[]> = {};
   
-  // Process monthly trend data if month and value columns exist
-  if (headers.includes('month') && headers.includes('value')) {
-    const monthlyData = dataRows.filter(row => row.month && row.value);
-    result.chartData.monthlyTrendData = monthlyData.map(row => ({
-      name: row.month,
-      value: parseFloat(row.value)
-    }));
-  }
+  headers.forEach(header => {
+    columnValues[header] = dataRows.map(row => row[header]).filter(val => val !== '' && val !== undefined && val !== null);
+    
+    // Check if column is numeric
+    const numericValues = columnValues[header].filter(val => !isNaN(parseFloat(val)) && isFinite(Number(val))).length;
+    const percentNumeric = numericValues / (columnValues[header].length || 1);
+    
+    // Check if column is date
+    const datePattern = /^\d{4}[-/](0?[1-9]|1[012])[-/](0?[1-9]|[12][0-9]|3[01])$|^(0?[1-9]|1[012])[-/](0?[1-9]|[12][0-9]|3[01])[-/]\d{4}$/;
+    const dateValues = columnValues[header].filter(val => datePattern.test(val)).length;
+    const percentDate = dateValues / (columnValues[header].length || 1);
+    
+    // Determine column type
+    if (percentNumeric > 0.7) {
+      columnTypes[header] = 'numeric';
+      result.columnData.numeric.push(header);
+      result.dataOverview.numericColumns++;
+    } else if (percentDate > 0.7) {
+      columnTypes[header] = 'date';
+      result.columnData.date.push(header);
+    } else if (columnValues[header].length > 0) {
+      const uniqueValues = new Set(columnValues[header]);
+      if (uniqueValues.size <= Math.min(10, columnValues[header].length * 0.2)) {
+        columnTypes[header] = 'categorical';
+        result.columnData.categorical.push(header);
+        result.dataOverview.categoricalColumns++;
+      } else {
+        columnTypes[header] = 'text';
+        result.columnData.text.push(header);
+      }
+    }
+  });
   
-  // Process risk matrix data if columns exist
-  if (headers.includes('risk_level') && headers.includes('impact') && headers.includes('count')) {
-    const riskData = dataRows.filter(row => row.risk_level && row.impact && row.count);
-    result.chartData.riskMatrixData = riskData.map(row => ({
-      riskLevel: row.risk_level,
-      impact: row.impact,
-      count: parseInt(row.count)
-    }));
-  }
-  
-  // Process traffic heatmap data if day, hour, and value columns exist
-  if (headers.includes('day') && headers.includes('hour') && headers.includes('value')) {
-    const trafficData = dataRows.filter(row => row.day !== undefined && row.hour !== undefined && row.value !== undefined);
-    result.chartData.trafficHeatmapData = trafficData.map(row => {
-      return [parseInt(row.day), parseInt(row.hour), parseInt(row.value)] as [number, number, number];
+  // Extract chart data based on column types
+  if (result.columnData.categorical.length > 0 && result.columnData.numeric.length > 0) {
+    const categoryCol = result.columnData.categorical[0];
+    const valueCol = result.columnData.numeric[0];
+    
+    // Group data for bar chart
+    const catValueMap: Record<string, number> = {};
+    dataRows.forEach(row => {
+      const category = row[categoryCol];
+      const value = parseFloat(row[valueCol]);
+      if (category && !isNaN(value)) {
+        if (catValueMap[category]) {
+          catValueMap[category] += value;
+        } else {
+          catValueMap[category] = value;
+        }
+      }
     });
+    
+    result.chartData.treatmentTypeData = Object.entries(catValueMap).map(([name, value]) => ({
+      name,
+      value
+    })).slice(0, 10); // Limit to top 10 categories
   }
   
-  // Update data overview metrics
-  result.dataOverview.numericColumns = Math.round(numericCount / (result.dataOverview.totalRows || 1));
-  result.dataOverview.categoricalColumns = Math.round(categoricalCount / (result.dataOverview.totalRows || 1));
+  // Create time series data if we have date columns
+  if (result.columnData.date.length > 0 && result.columnData.numeric.length > 0) {
+    const dateCol = result.columnData.date[0];
+    const valueCol = result.columnData.numeric[0];
+    
+    // Group data by date
+    const dateValueMap: Record<string, number> = {};
+    dataRows.forEach(row => {
+      const date = row[dateCol];
+      const value = parseFloat(row[valueCol]);
+      if (date && !isNaN(value)) {
+        if (dateValueMap[date]) {
+          dateValueMap[date] += value;
+        } else {
+          dateValueMap[date] = value;
+        }
+      }
+    });
+    
+    result.chartData.monthlyTrendData = Object.entries(dateValueMap).map(([name, value]) => ({
+      name,
+      value
+    })).slice(0, 12); // Limit to 12 time points
+  }
   
   // Check for duplicates
   const uniqueRows = new Set(lines.slice(1).map(line => line.trim()));

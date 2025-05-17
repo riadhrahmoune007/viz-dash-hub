@@ -40,6 +40,13 @@ interface MLModelMetricsType {
   };
 }
 
+interface ColumnDataType {
+  numeric: string[];
+  categorical: string[];
+  date: string[];
+  text: string[];
+}
+
 // Define the types for our context
 interface DataContextType {
   chartData: {
@@ -51,6 +58,8 @@ interface DataContextType {
   };
   dataOverview: DataOverviewType | null;
   mlModelMetrics: MLModelMetricsType | null;
+  columnData: ColumnDataType;
+  datasetColumns: string[];
   updateDataFromUpload: (fileData: any) => void;
   isUsingDefaultData: boolean;
   isLoading: boolean;
@@ -85,6 +94,13 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   });
   const [dataOverview, setDataOverview] = useState(defaultDataOverview);
   const [mlModelMetrics, setMlModelMetrics] = useState(defaultMlModelMetrics);
+  const [columnData, setColumnData] = useState<ColumnDataType>({
+    numeric: ['Age', 'Blood Pressure', 'Cholesterol', 'Heart Rate', 'Diabetes Risk Score'],
+    categorical: ['Gender', 'Treatment Type', 'Patient Status', 'Region', 'Satisfaction Score'],
+    date: ['Visit Date', 'Follow Up Date'],
+    text: ['Notes', 'Doctor Comments']
+  });
+  const [datasetColumns, setDatasetColumns] = useState<string[]>([]);
   const [isUsingDefaultData, setIsUsingDefaultData] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
@@ -251,15 +267,29 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (fileData.mlModelMetrics) {
         setMlModelMetrics(fileData.mlModelMetrics);
       }
+
+      // Process column data
+      if (fileData.columnData) {
+        setColumnData(fileData.columnData);
+      }
+
+      // Process dataset columns
+      if (fileData.datasetColumns) {
+        setDatasetColumns(fileData.datasetColumns);
+      }
       
       setIsUsingDefaultData(false);
       
       // Save the data to the database
-      await databaseService.saveUploadedData(fileData);
+      try {
+        await databaseService.saveUploadedData(fileData);
+      } catch (err) {
+        console.error("Error saving data:", err);
+      }
       
       toast({
         title: "Data updated successfully",
-        description: "Dashboard has been updated with your uploaded data and saved to database",
+        description: "Dashboard has been updated with your uploaded data and visualizations have been created dynamically.",
       });
     } catch (error) {
       console.error("Error processing data:", error);
@@ -276,6 +306,8 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     chartData,
     dataOverview,
     mlModelMetrics,
+    columnData,
+    datasetColumns,
     updateDataFromUpload,
     isUsingDefaultData,
     isLoading,

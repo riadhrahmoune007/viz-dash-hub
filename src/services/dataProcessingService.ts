@@ -84,6 +84,9 @@ export const processCSV = (content: string): any => {
     }
   });
   
+  // Generate dynamic KPIs
+  generateDynamicKPIs(result, dataRows, columnTypes, columnValues);
+  
   // Extract chart data based on column types
   if (result.columnData.categorical.length > 0 && result.columnData.numeric.length > 0) {
     const categoryCol = result.columnData.categorical[0];
@@ -138,18 +141,130 @@ export const processCSV = (content: string): any => {
   const uniqueRows = new Set(lines.slice(1).map(line => line.trim()));
   result.dataOverview.duplicates = lines.length - 1 - uniqueRows.size;
   
-  // Process KPI data if relevant columns exist
+  // Use explicitly provided KPI data if it exists
   if (headers.includes('kpi_title') && headers.includes('kpi_value') && headers.includes('kpi_change')) {
     const kpiRows = dataRows.filter(row => row.kpi_title && row.kpi_value !== undefined);
-    result.kpiData = kpiRows.map(row => ({
-      title: row.kpi_title,
-      value: row.kpi_value,
-      change: parseFloat(row.kpi_change || '0'),
-      isPositive: parseFloat(row.kpi_change || '0') >= 0
-    }));
+    if (kpiRows.length > 0) {
+      result.kpiData = kpiRows.map(row => ({
+        title: row.kpi_title,
+        value: row.kpi_value,
+        change: parseFloat(row.kpi_change || '0'),
+        isPositive: parseFloat(row.kpi_change || '0') >= 0
+      }));
+    }
   }
   
   return result;
+};
+
+// New function to generate dynamic KPIs
+const generateDynamicKPIs = (result: any, dataRows: any[], columnTypes: Record<string, string>, columnValues: Record<string, any[]>) => {
+  // If we already have KPI data, don't regenerate
+  if (result.kpiData.length > 0) return;
+  
+  const kpis = [];
+  const numericColumns = result.columnData.numeric;
+  const categoricalColumns = result.columnData.categorical;
+  
+  // Total records KPI
+  kpis.push({
+    title: 'Total Records',
+    value: dataRows.length.toLocaleString(),
+    change: 0,
+    isPositive: true
+  });
+  
+  // Calculate statistics for numeric columns
+  numericColumns.slice(0, 3).forEach(column => {
+    const values = columnValues[column]
+      .map(val => parseFloat(val))
+      .filter(val => !isNaN(val));
+    
+    if (values.length > 0) {
+      // Calculate average
+      const sum = values.reduce((a, b) => a + b, 0);
+      const avg = sum / values.length;
+      
+      // Calculate median
+      const sortedValues = [...values].sort((a, b) => a - b);
+      const median = sortedValues.length % 2 === 0
+        ? (sortedValues[sortedValues.length / 2 - 1] + sortedValues[sortedValues.length / 2]) / 2
+        : sortedValues[Math.floor(sortedValues.length / 2)];
+      
+      // Format decimal places based on value size
+      const formatValue = (value: number) => {
+        if (Math.abs(value) >= 1000) return value.toLocaleString('en-US', { maximumFractionDigits: 0 });
+        if (Math.abs(value) >= 100) return value.toLocaleString('en-US', { maximumFractionDigits: 1 });
+        if (Math.abs(value) >= 10) return value.toLocaleString('en-US', { maximumFractionDigits: 2 });
+        return value.toLocaleString('en-US', { maximumFractionDigits: 3 });
+      };
+      
+      // Add average KPI
+      kpis.push({
+        title: `Avg. ${column}`,
+        value: formatValue(avg),
+        change: ((avg / median - 1) * 100).toFixed(1),
+        isPositive: avg >= median
+      });
+      
+      // Get min and max
+      const min = Math.min(...values);
+      const max = Math.max(...values);
+      
+      // Add range KPI for the first numeric column
+      if (numericColumns.indexOf(column) === 0) {
+        kpis.push({
+          title: `${column} Range`,
+          value: `${formatValue(min)} - ${formatValue(max)}`,
+          change: ((max - min) / max * 100).toFixed(1),
+          isPositive: true
+        });
+      }
+    }
+  });
+  
+  // Calculate counts for categorical columns
+  categoricalColumns.slice(0, 2).forEach(column => {
+    const categoryCount: Record<string, number> = {};
+    dataRows.forEach(row => {
+      const category = row[column];
+      if (category) {
+        categoryCount[category] = (categoryCount[category] || 0) + 1;
+      }
+    });
+    
+    // Find most common category
+    let mostCommon = '';
+    let maxCount = 0;
+    Object.entries(categoryCount).forEach(([cat, count]) => {
+      if (count > maxCount) {
+        mostCommon = cat;
+        maxCount = count;
+      }
+    });
+    
+    if (mostCommon) {
+      const percentage = (maxCount / dataRows.length * 100).toFixed(1);
+      kpis.push({
+        title: `Top ${column}`,
+        value: mostCommon,
+        change: parseFloat(percentage),
+        isPositive: true
+      });
+    }
+  });
+  
+  // Calculate missing values percentage
+  const missingPercentage = (result.dataOverview.missingValues / (dataRows.length * result.dataOverview.totalColumns) * 100).toFixed(1);
+  kpis.push({
+    title: 'Data Completeness',
+    value: `${(100 - parseFloat(missingPercentage)).toFixed(1)}%`,
+    change: -parseFloat(missingPercentage),
+    isPositive: parseFloat(missingPercentage) < 5
+  });
+  
+  // Ensure we have at least 4 KPIs and at most 7
+  result.kpiData = kpis.slice(0, 7);
 };
 
 // Process JSON data
@@ -171,8 +286,38 @@ export const processJSON = (content: any): any => {
         numericColumns: 0,
         categoricalColumns: 0
       },
-      mlModelMetrics: content.mlModelMetrics || null
+      mlModelMetrics: content.mlModelMetrics || null,
+      columnData: content.columnData || {
+        numeric: [],
+        categorical: [],
+        date: [],
+        text: []
+      },
+      datasetColumns: content.datasetColumns || []
     };
+    
+    // Generate dynamic KPIs if needed
+    if (!result.kpiData || result.kpiData.length === 0) {
+      // Try to extract rows data from JSON if available
+      const dataRows = content.data || content.rows || [];
+      if (dataRows.length > 0 && result.columnData) {
+        const columnValues: Record<string, any[]> = {};
+        const columnTypes: Record<string, string> = {};
+        
+        // Extract column values from rows
+        result.columnData.numeric.forEach(col => {
+          columnValues[col] = dataRows.map((row: any) => row[col]).filter((val: any) => val !== null && val !== undefined);
+          columnTypes[col] = 'numeric';
+        });
+        
+        result.columnData.categorical.forEach(col => {
+          columnValues[col] = dataRows.map((row: any) => row[col]).filter((val: any) => val !== null && val !== undefined);
+          columnTypes[col] = 'categorical';
+        });
+        
+        generateDynamicKPIs(result, dataRows, columnTypes, columnValues);
+      }
+    }
     
     return result;
   } catch (error) {

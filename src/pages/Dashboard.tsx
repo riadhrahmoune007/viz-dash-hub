@@ -132,15 +132,21 @@ const Dashboard: React.FC = () => {
           
           {/* KPI Cards Grid */}
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 gap-4 mb-6">
-            {chartData.kpiData.map((kpi, index) => (
-              <KpiCard
-                key={index}
-                title={kpi.title}
-                value={kpi.value}
-                change={kpi.change}
-                isPositive={kpi.isPositive}
-              />
-            ))}
+            {chartData.kpiData.length > 0 ? (
+              chartData.kpiData.map((kpi, index) => (
+                <KpiCard
+                  key={index}
+                  title={kpi.title}
+                  value={kpi.value}
+                  change={kpi.change}
+                  isPositive={kpi.isPositive}
+                />
+              ))
+            ) : (
+              <div className="col-span-full bg-white p-6 rounded-lg shadow flex items-center justify-center">
+                <p className="text-gray-500">No KPI data available. Upload a dataset to generate metrics.</p>
+              </div>
+            )}
           </div>
           
           {/* Main Charts Grid */}
@@ -245,3 +251,4 @@ const Dashboard: React.FC = () => {
 };
 
 export default Dashboard;
+

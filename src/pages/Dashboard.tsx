@@ -10,10 +10,74 @@ import DataOverviewCard from '@/components/DataOverviewCard';
 import MLModelCard from '@/components/MLModelCard';
 import TrafficHeatmap from '@/components/TrafficHeatmap';
 import { useData } from '@/context/DataContext';
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Separator } from "@/components/ui/separator";
+import { FileText } from "lucide-react";
 
 const Dashboard: React.FC = () => {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-  const { chartData, dataOverview, mlModelMetrics, isUsingDefaultData } = useData();
+  const { 
+    chartData, 
+    dataOverview, 
+    mlModelMetrics, 
+    isUsingDefaultData,
+    columnData,
+    datasetColumns
+  } = useData();
+
+  // Generate dynamic dashboard summary based on the uploaded dataset
+  const getDashboardSummary = () => {
+    if (datasetColumns.length === 0) {
+      return "Upload a dataset to see a personalized dashboard overview.";
+    }
+
+    const numericColumns = columnData.numeric.length;
+    const categoryColumns = columnData.categorical.length;
+    const dateColumns = columnData.date.length;
+    const totalColumns = datasetColumns.length;
+    const totalRows = dataOverview?.totalRows || 0;
+
+    let summary = `This dashboard is analyzing ${totalRows.toLocaleString()} records with ${totalColumns} features. `;
+    
+    if (numericColumns > 0) {
+      summary += `Found ${numericColumns} numeric columns suitable for trends and metrics. `;
+    }
+    
+    if (categoryColumns > 0) {
+      summary += `Identified ${categoryColumns} categorical columns for segmentation and classification. `;
+    }
+    
+    if (dateColumns > 0) {
+      summary += `Time-based analysis is available with ${dateColumns} date columns. `;
+    }
+    
+    return summary;
+  };
+
+  // Get dynamic dataset name based on columns
+  const getDatasetName = () => {
+    if (datasetColumns.length === 0) {
+      return "Key Point Indicators";
+    }
+
+    const hasHealthTerms = datasetColumns.some(col => 
+      /patient|health|treatment|medical|doctor|hospital|clinic|disease/i.test(col)
+    );
+    
+    const hasFinanceTerms = datasetColumns.some(col => 
+      /sales|revenue|profit|cost|finance|price|income|expense/i.test(col)
+    );
+    
+    const hasMarketingTerms = datasetColumns.some(col => 
+      /campaign|marketing|customer|lead|conversion|traffic|social/i.test(col)
+    );
+
+    if (hasHealthTerms) return "Healthcare Data Overview";
+    if (hasFinanceTerms) return "Financial Performance Metrics";
+    if (hasMarketingTerms) return "Marketing Analytics Dashboard";
+    
+    return "Dataset Analysis";
+  };
 
   return (
     <div className="flex h-screen bg-gray-50">
@@ -22,9 +86,14 @@ const Dashboard: React.FC = () => {
       <div className="flex-1 flex flex-col overflow-hidden">
         <div className="p-6 overflow-y-auto">
           <DashboardHeader 
-            title="Main Key Point Indicators" 
-            className="mb-6"
+            title={getDatasetName()} 
+            className="mb-2"
           />
+          
+          {/* Dynamic Description */}
+          <div className="mb-6 text-sm text-muted-foreground">
+            <p>{getDashboardSummary()}</p>
+          </div>
           
           {isUsingDefaultData && (
             <div className="bg-amber-50 border-l-4 border-amber-400 p-4 mb-6">
@@ -43,6 +112,24 @@ const Dashboard: React.FC = () => {
             </div>
           )}
           
+          {/* File Information Alert */}
+          {!isUsingDefaultData && datasetColumns.length > 0 && (
+            <Alert className="mb-6 bg-blue-50 border-blue-200">
+              <FileText className="h-4 w-4 text-blue-600" />
+              <AlertDescription>
+                <div className="flex flex-col gap-2">
+                  <p><span className="font-medium">Dataset loaded:</span> {dataOverview?.totalRows.toLocaleString()} rows × {datasetColumns.length} columns</p>
+                  <p className="text-sm text-muted-foreground">
+                    Columns detected: {columnData.numeric.length > 0 && <span>{columnData.numeric.length} numeric</span>}
+                    {columnData.categorical.length > 0 && <span>, {columnData.categorical.length} categorical</span>}
+                    {columnData.date.length > 0 && <span>, {columnData.date.length} date</span>}
+                    {columnData.text.length > 0 && <span>, {columnData.text.length} text</span>}
+                  </p>
+                </div>
+              </AlertDescription>
+            </Alert>
+          )}
+          
           {/* KPI Cards Grid */}
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 gap-4 mb-6">
             {chartData.kpiData.map((kpi, index) => (
@@ -58,14 +145,31 @@ const Dashboard: React.FC = () => {
           
           {/* Main Charts Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-            <BarChartComponent 
-              title="Treatment Types" 
-              data={chartData.treatmentTypeData} 
-            />
-            <LineChartComponent 
-              title="2022 Monthly Trends" 
-              data={chartData.monthlyTrendData}
-            />
+            {chartData.treatmentTypeData.length > 0 ? (
+              <BarChartComponent 
+                title={columnData.categorical.length > 0 && columnData.numeric.length > 0 
+                  ? `${columnData.categorical[0]} Distribution` 
+                  : "Treatment Types"} 
+                data={chartData.treatmentTypeData} 
+              />
+            ) : (
+              <div className="bg-white p-6 rounded-lg shadow flex items-center justify-center">
+                <p className="text-gray-500">No categorical data available</p>
+              </div>
+            )}
+            
+            {chartData.monthlyTrendData.length > 0 ? (
+              <LineChartComponent 
+                title={columnData.date.length > 0 && columnData.numeric.length > 0
+                  ? `${columnData.numeric[0]} Trend by ${columnData.date[0]}`
+                  : "Monthly Trends"} 
+                data={chartData.monthlyTrendData}
+              />
+            ) : (
+              <div className="bg-white p-6 rounded-lg shadow flex items-center justify-center">
+                <p className="text-gray-500">No time series data available</p>
+              </div>
+            )}
           </div>
           
           {/* Lower Section: Data Overview, ML Models, and Traffic */}
@@ -109,17 +213,29 @@ const Dashboard: React.FC = () => {
             </div>
             
             <div>
-              <HeatmapComponent 
-                title="Risk Matrix" 
-                data={chartData.riskMatrixData}
-              />
+              {chartData.riskMatrixData.length > 0 ? (
+                <HeatmapComponent 
+                  title="Risk Matrix" 
+                  data={chartData.riskMatrixData}
+                />
+              ) : (
+                <div className="bg-white p-6 rounded-lg shadow h-full flex items-center justify-center">
+                  <p className="text-gray-500">No risk data available</p>
+                </div>
+              )}
             </div>
             
             <div>
-              <TrafficHeatmap 
-                title="Traffic Channels" 
-                data={chartData.trafficHeatmapData}
-              />
+              {chartData.trafficHeatmapData.length > 0 ? (
+                <TrafficHeatmap 
+                  title="Data Distribution" 
+                  data={chartData.trafficHeatmapData}
+                />
+              ) : (
+                <div className="bg-white p-6 rounded-lg shadow h-full flex items-center justify-center">
+                  <p className="text-gray-500">No distribution data available</p>
+                </div>
+              )}
             </div>
           </div>
         </div>

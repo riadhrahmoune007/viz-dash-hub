@@ -4,15 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { ArrowUp, ArrowDown } from "lucide-react";
 import { cn } from '@/lib/utils';
 
-interface KpiCardProps {
-  title: string;
-  value: string | number;
-  change: number;
-  isPositive: boolean;
-  className?: string;
-}
-
-const KpiCard: React.FC<KpiCardProps> = ({ title, value, change, isPositive, className }) => {
+const KpiCard = ({ title, value, change, isPositive, className }) => {
   return (
     <Card className={cn("overflow-hidden bg-white", className)}>
       <CardContent className="p-6">

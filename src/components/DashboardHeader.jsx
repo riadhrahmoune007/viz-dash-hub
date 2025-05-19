@@ -4,13 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Calendar, Filter, Download } from "lucide-react";
 
-interface DashboardHeaderProps {
-  title: string;
-  subtitle?: string;
-  className?: string;
-}
-
-const DashboardHeader: React.FC<DashboardHeaderProps> = ({ title, subtitle, className }) => {
+const DashboardHeader = ({ title, subtitle, className }) => {
   // Get current date in a nice format
   const currentDate = new Date();
   const formattedDate = currentDate.toLocaleDateString('en-US', {

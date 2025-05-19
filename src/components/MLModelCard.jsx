@@ -4,22 +4,15 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { BrainCircuit } from "lucide-react";
 
-interface MLModelCardProps {
-  title: string;
-  target: string;
-  metrics: Record<string, number>;
-  className?: string;
-}
-
-const formatMetricValue = (value: number): string => {
+const formatMetricValue = (value) => {
   // Format percentage metrics to 1 decimal place
   if (value < 1) return `${(value * 100).toFixed(1)}%`;
   // Format other metrics to 2 decimal places
   return value.toFixed(2);
 };
 
-const getMetricLabel = (key: string): string => {
-  const labels: Record<string, string> = {
+const getMetricLabel = (key) => {
+  const labels = {
     rmse: 'RMSE',
     r2: 'R²',
     mape: 'MAPE',
@@ -32,7 +25,7 @@ const getMetricLabel = (key: string): string => {
   return labels[key] || key;
 };
 
-const MLModelCard: React.FC<MLModelCardProps> = ({ title, target, metrics, className }) => {
+const MLModelCard = ({ title, target, metrics, className }) => {
   return (
     <Card className={className}>
       <CardHeader className="pb-2">

@@ -5,7 +5,7 @@ import DashboardHeader from '@/components/DashboardHeader';
 import MLModelCard from '@/components/MLModelCard';
 import { mlModelMetrics } from '@/data/mockData';
 
-const MLModels: React.FC = () => {
+const MLModels = () => {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   return (

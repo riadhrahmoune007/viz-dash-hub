@@ -2,15 +2,8 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { HeatmapData } from '@/data/mockData';
 
-interface HeatmapComponentProps {
-  title: string;
-  data: HeatmapData[];
-  className?: string;
-}
-
-const getColor = (count: number): string => {
+const getColor = (count) => {
   if (count === 0) return 'bg-white text-gray-400';
   if (count <= 2) return 'bg-blue-100 text-blue-800';
   if (count <= 4) return 'bg-blue-300 text-blue-900';
@@ -18,10 +11,7 @@ const getColor = (count: number): string => {
 };
 
 // Function to get distinct risk levels and impacts, maintaining order
-const getDistinctValues = (data: HeatmapData[]): {
-  riskLevels: string[],
-  impacts: string[]
-} => {
+const getDistinctValues = (data) => {
   const orderRiskLevels = ['Rare', 'Unlikely', 'Possible', 'Likely', 'Almost Certain'];
   const orderImpacts = ['Insignificance', 'Minor', 'Moderate', 'Major', 'Extreme'];
   
@@ -31,11 +21,11 @@ const getDistinctValues = (data: HeatmapData[]): {
   };
 };
 
-const HeatmapComponent: React.FC<HeatmapComponentProps> = ({ title, data, className }) => {
+const HeatmapComponent = ({ title, data, className }) => {
   const { riskLevels, impacts } = getDistinctValues(data);
 
   // Function to get count for a specific risk level and impact
-  const getCount = (riskLevel: string, impact: string): number => {
+  const getCount = (riskLevel, impact) => {
     const item = data.find(d => d.riskLevel === riskLevel && d.impact === impact);
     return item ? item.count : 0;
   };

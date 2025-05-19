@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import DashboardSidebar from '@/components/DashboardSidebar';
 import DashboardHeader from '@/components/DashboardHeader';
@@ -6,6 +5,7 @@ import KpiCard from '@/components/KpiCard';
 import BarChartComponent from '@/components/BarChartComponent';
 import LineChartComponent from '@/components/LineChartComponent';
 import HeatmapComponent from '@/components/HeatmapComponent';
+import LinearRegressionChart from '@/components/LinearRegressionChart';
 import DataOverviewCard from '@/components/DataOverviewCard';
 import MLModelCard from '@/components/MLModelCard';
 import TrafficHeatmap from '@/components/TrafficHeatmap';
@@ -22,7 +22,8 @@ const Dashboard: React.FC = () => {
     mlModelMetrics, 
     isUsingDefaultData,
     columnData,
-    datasetColumns
+    datasetColumns,
+    regressionData
   } = useData();
 
   // Generate dynamic dashboard summary based on the uploaded dataset
@@ -178,6 +179,24 @@ const Dashboard: React.FC = () => {
             )}
           </div>
           
+          {/* Linear Regression Chart */}
+          <div className="mb-6">
+            {regressionData && regressionData.data && regressionData.data.length > 0 ? (
+              <LinearRegressionChart 
+                title={`Linear Regression: ${regressionData.xAxisName} vs ${regressionData.yAxisName}`}
+                xAxisName={regressionData.xAxisName}
+                yAxisName={regressionData.yAxisName}
+                data={regressionData.data}
+              />
+            ) : (
+              <div className="bg-white p-6 rounded-lg shadow flex items-center justify-center">
+                <p className="text-gray-500">
+                  No regression data available. Upload a dataset with numeric columns to see linear regression analysis.
+                </p>
+              </div>
+            )}
+          </div>
+          
           {/* Lower Section: Data Overview, ML Models, and Traffic */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <div className="space-y-6">
@@ -251,4 +270,3 @@ const Dashboard: React.FC = () => {
 };
 
 export default Dashboard;
-

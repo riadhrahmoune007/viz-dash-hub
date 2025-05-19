@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { toast } from '@/components/ui/use-toast';
 import { 
@@ -9,6 +8,7 @@ import {
 import databaseService from '@/services/databaseService';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/services/supabaseClient';
+import { RegressionDataPoint } from '@/components/LinearRegressionChart';
 
 // Define types
 type TrafficHeatmapData = [number, number, number];
@@ -47,6 +47,13 @@ interface ColumnDataType {
   text: string[];
 }
 
+// Add regression data type
+interface RegressionData {
+  xAxisName: string;
+  yAxisName: string;
+  data: RegressionDataPoint[];
+}
+
 // Define the types for our context
 interface DataContextType {
   chartData: {
@@ -65,6 +72,7 @@ interface DataContextType {
   isLoading: boolean;
   error: Error | null;
   supbaseConnected: boolean;
+  regressionData: RegressionData | null;
 }
 
 // Create the context with default values
@@ -80,6 +88,33 @@ import {
   dataOverview as defaultDataOverview,
   mlModelMetrics as defaultMlModelMetrics
 } from '@/data/mockData';
+
+// Mock regression data
+const mockRegressionData: RegressionData = {
+  xAxisName: 'Age',
+  yAxisName: 'Blood Glucose Level',
+  data: [
+    { x: 35, y: 92 },
+    { x: 42, y: 99 },
+    { x: 55, y: 115 },
+    { x: 26, y: 88 },
+    { x: 70, y: 120 },
+    { x: 45, y: 108 },
+    { x: 33, y: 95 },
+    { x: 60, y: 130 },
+    { x: 29, y: 91 },
+    { x: 50, y: 112 },
+    { x: 37, y: 93 },
+    { x: 62, y: 125 },
+    { x: 40, y: 100 },
+    { x: 53, y: 118 },
+    { x: 44, y: 105 },
+    { x: 39, y: 97 },
+    { x: 58, y: 122 },
+    { x: 48, y: 110 },
+    { x: 31, y: 89 }
+  ]
+};
 
 export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   // Cast trafficHeatmapData to the expected type
@@ -105,6 +140,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
   const [supbaseConnected, setSupabaseConnected] = useState(false);
+  const [regressionData, setRegressionData] = useState<RegressionData | null>(mockRegressionData);
 
   // Check Supabase connection
   useEffect(() => {
@@ -227,6 +263,46 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     fetchDataFromDatabase();
   }, [supbaseConnected]); // Only refetch when connection status changes
 
+  // Generate regression data from numeric columns
+  const generateRegressionData = (fileData: any) => {
+    if (!fileData.columnData || !fileData.columnData.numeric || fileData.columnData.numeric.length < 2) {
+      return null;
+    }
+
+    // Get the first two numeric columns for regression
+    const xColumn = fileData.columnData.numeric[0];
+    const yColumn = fileData.columnData.numeric[1];
+    
+    // If we have raw data and both columns exist in it
+    if (fileData.rawData && Array.isArray(fileData.rawData) && fileData.rawData.length > 0) {
+      // Filter out rows with missing values
+      const validData = fileData.rawData.filter((row: any) => 
+        row[xColumn] !== undefined && 
+        row[xColumn] !== null && 
+        !isNaN(Number(row[xColumn])) &&
+        row[yColumn] !== undefined && 
+        row[yColumn] !== null && 
+        !isNaN(Number(row[yColumn]))
+      );
+      
+      // Create regression data points (limit to 100 points for performance)
+      const regressionPoints = validData.slice(0, 100).map((row: any) => ({
+        x: Number(row[xColumn]),
+        y: Number(row[yColumn])
+      }));
+      
+      if (regressionPoints.length > 1) {
+        return {
+          xAxisName: xColumn,
+          yAxisName: yColumn,
+          data: regressionPoints
+        };
+      }
+    }
+    
+    return null;
+  };
+
   // Function to update data from uploaded file
   const updateDataFromUpload = async (fileData: any) => {
     try {
@@ -273,6 +349,15 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setColumnData(fileData.columnData);
       }
 
+      // Process regression data
+      const newRegressionData = generateRegressionData(fileData);
+      if (newRegressionData) {
+        setRegressionData(newRegressionData);
+      } else {
+        // If no regression data could be generated, keep the default
+        setRegressionData(isUsingDefaultData ? mockRegressionData : null);
+      }
+
       // Process dataset columns
       if (fileData.datasetColumns) {
         setDatasetColumns(fileData.datasetColumns);
@@ -312,7 +397,8 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     isUsingDefaultData,
     isLoading,
     error,
-    supbaseConnected
+    supbaseConnected,
+    regressionData
   };
 
   return (

@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import DashboardSidebar from '@/components/DashboardSidebar';
 import DashboardHeader from '@/components/DashboardHeader';
@@ -6,13 +5,14 @@ import BarChartComponent from '@/components/BarChartComponent';
 import LineChartComponent from '@/components/LineChartComponent';
 import HeatmapComponent from '@/components/HeatmapComponent';
 import TrafficHeatmap from '@/components/TrafficHeatmap';
+import LinearRegressionChart from '@/components/LinearRegressionChart';
 import FilterBar from '@/components/FilterBar';
 import { toast } from '@/components/ui/use-toast';
 import { useData } from '@/context/DataContext';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ChartBar, ChartLine, Grid3X3 } from "lucide-react";
+import { ChartBar, ChartLine, Grid3X3, ScatterChart } from "lucide-react";
 
 const Visualizations = () => {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
@@ -21,7 +21,8 @@ const Visualizations = () => {
     chartData, 
     isUsingDefaultData, 
     columnData,
-    datasetColumns 
+    datasetColumns,
+    regressionData 
   } = useData();
   const [selectedVisType, setSelectedVisType] = useState("bar");
 
@@ -30,7 +31,7 @@ const Visualizations = () => {
       id: 'chartType',
       label: 'Chart Type',
       type: 'select',
-      options: ['Bar Charts', 'Line Charts', 'Heatmaps', 'All']
+      options: ['Bar Charts', 'Line Charts', 'Scatter Plots', 'Heatmaps', 'All']
     },
     {
       id: 'timeRange',
@@ -63,6 +64,7 @@ const Visualizations = () => {
     if (type === 'bar' && filters.chartType === 'Bar Charts') return true;
     if (type === 'line' && filters.chartType === 'Line Charts') return true;
     if (type === 'heatmap' && filters.chartType === 'Heatmaps') return true;
+    if (type === 'scatter' && filters.chartType === 'Scatter Plots') return true;
     
     return false;
   };
@@ -109,6 +111,21 @@ const Visualizations = () => {
           );
         }
       });
+    }
+    
+    // Generate regression chart
+    if (columnData.numeric.length > 1 && showChart('scatter')) {
+      if (regressionData && regressionData.data && regressionData.data.length > 0) {
+        visuals.push(
+          <LinearRegressionChart 
+            key="scatter-regression"
+            title={`Linear Regression: ${regressionData.xAxisName} vs ${regressionData.yAxisName}`}
+            xAxisName={regressionData.xAxisName}
+            yAxisName={regressionData.yAxisName}
+            data={regressionData.data}
+          />
+        );
+      }
     }
     
     // Generate heatmaps if applicable
@@ -163,6 +180,11 @@ const Visualizations = () => {
     
     if (columnData.date.length > 0 && columnData.numeric.length > 0) {
       options.push({ id: 'line', label: 'Line Charts', icon: <ChartLine className="w-4 h-4" /> });
+    }
+    
+    // Add regression option if numeric columns available
+    if (columnData.numeric.length > 1 || (regressionData && regressionData.data)) {
+      options.push({ id: 'scatter', label: 'Scatter Plots', icon: <ScatterChart className="w-4 h-4" /> });
     }
     
     if (chartData.riskMatrixData?.length > 0 || chartData.trafficHeatmapData?.length > 0) {
@@ -267,6 +289,26 @@ const Visualizations = () => {
                   )}
                   
                   {!chartData.treatmentTypeData.length && !chartData.monthlyTrendData.length && renderNoDataMessage()}
+                </div>
+              )}
+              
+              {/* Regression Chart */}
+              {showChart('scatter') && (
+                <div className="mb-6">
+                  {regressionData && regressionData.data && regressionData.data.length > 0 ? (
+                    <LinearRegressionChart 
+                      title={`Linear Regression: ${regressionData.xAxisName} vs ${regressionData.yAxisName}`}
+                      xAxisName={regressionData.xAxisName}
+                      yAxisName={regressionData.yAxisName}
+                      data={regressionData.data}
+                    />
+                  ) : (
+                    <div className="bg-white p-6 rounded-lg shadow flex items-center justify-center">
+                      <p className="text-gray-500">
+                        No scatter plot data available. Upload a dataset with numeric columns to see regression analysis.
+                      </p>
+                    </div>
+                  )}
                 </div>
               )}
               

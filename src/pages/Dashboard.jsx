@@ -14,7 +14,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Separator } from "@/components/ui/separator";
 import { FileText } from "lucide-react";
 
-const Dashboard: React.FC = () => {
+const Dashboard = () => {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const { 
     chartData, 
@@ -96,6 +96,7 @@ const Dashboard: React.FC = () => {
             <p>{getDashboardSummary()}</p>
           </div>
           
+          {/* Default Data Alert */}
           {isUsingDefaultData && (
             <div className="bg-amber-50 border-l-4 border-amber-400 p-4 mb-6">
               <div className="flex">

@@ -57,7 +57,6 @@ const Visualizations = () => {
     }
   };
 
-  // Determine which charts to show based on filters
   const showChart = (type) => {
     if (!filters.chartType || filters.chartType === 'All') return true;
     
@@ -69,11 +68,9 @@ const Visualizations = () => {
     return false;
   };
 
-  // Generate dynamic visualizations based on column data
   const generateDynamicVisualizations = () => {
     const visuals = [];
     
-    // Generate bar charts for categorical + numeric columns
     if (columnData.categorical.length > 0 && columnData.numeric.length > 0 && showChart('bar')) {
       const categoryColumns = columnData.categorical.slice(0, 3); // Limit to first 3 categorical columns
       
@@ -93,7 +90,6 @@ const Visualizations = () => {
       });
     }
     
-    // Generate line charts for date + numeric columns
     if (columnData.date.length > 0 && columnData.numeric.length > 0 && showChart('line')) {
       const dateColumns = columnData.date.slice(0, 2); // Limit to first 2 date columns
       
@@ -113,7 +109,6 @@ const Visualizations = () => {
       });
     }
     
-    // Generate regression chart
     if (columnData.numeric.length > 1 && showChart('scatter')) {
       if (regressionData && regressionData.data && regressionData.data.length > 0) {
         visuals.push(
@@ -128,7 +123,6 @@ const Visualizations = () => {
       }
     }
     
-    // Generate heatmaps if applicable
     if (showChart('heatmap')) {
       if (chartData.riskMatrixData && chartData.riskMatrixData.length > 0) {
         visuals.push(
@@ -170,7 +164,6 @@ const Visualizations = () => {
     </Card>
   );
 
-  // Generate dynamic visualization options based on available data
   const getVisualizationOptions = () => {
     const options = [];
     
@@ -182,7 +175,6 @@ const Visualizations = () => {
       options.push({ id: 'line', label: 'Line Charts', icon: <ChartLine className="w-4 h-4" /> });
     }
     
-    // Add regression option if numeric columns available
     if (columnData.numeric.length > 1 || (regressionData && regressionData.data)) {
       options.push({ id: 'scatter', label: 'Scatter Plots', icon: <ScatterChart className="w-4 h-4" /> });
     }
@@ -269,10 +261,8 @@ const Visualizations = () => {
             </Tabs>
           )}
           
-          {/* Show default layout if no tabs are rendered */}
           {visOptions.length === 0 && (
             <>
-              {/* Main Charts Grid */}
               {(showChart('bar') || showChart('line')) && (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                   {showChart('bar') && chartData.treatmentTypeData.length > 0 && (
@@ -292,7 +282,6 @@ const Visualizations = () => {
                 </div>
               )}
               
-              {/* Regression Chart */}
               {showChart('scatter') && (
                 <div className="mb-6">
                   {regressionData && regressionData.data && regressionData.data.length > 0 ? (
@@ -312,7 +301,6 @@ const Visualizations = () => {
                 </div>
               )}
               
-              {/* Heatmaps Grid */}
               {showChart('heatmap') && (
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                   {chartData.riskMatrixData.length > 0 && (
@@ -334,7 +322,6 @@ const Visualizations = () => {
             </>
           )}
           
-          {/* If no visualizations are available at all */}
           {dynamicVisuals.length === 0 && visOptions.length === 0 && (
             <div className="grid grid-cols-1 gap-6">
               {renderNoDataMessage()}

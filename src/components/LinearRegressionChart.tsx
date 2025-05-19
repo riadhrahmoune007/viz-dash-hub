@@ -14,7 +14,7 @@ import {
   Legend
 } from 'recharts';
 import { ChartBarIcon } from "lucide-react";
-import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
+import { ChartContainer, ChartTooltip } from "@/components/ui/chart";
 
 export interface RegressionDataPoint {
   x: number;
@@ -104,6 +104,19 @@ const LinearRegressionChart: React.FC<LinearRegressionChartProps> = ({
     );
   }
 
+  // Custom tooltip formatter function
+  const CustomTooltip = ({ active, payload, label }: any) => {
+    if (active && payload && payload.length) {
+      return (
+        <div className="bg-white p-2 border border-gray-200 shadow-md rounded">
+          <p className="text-sm font-medium">{`${xAxisName}: ${payload[0].payload.x.toFixed(2)}`}</p>
+          <p className="text-sm font-medium">{`${yAxisName}: ${payload[0].payload.y.toFixed(2)}`}</p>
+        </div>
+      );
+    }
+    return null;
+  };
+
   return (
     <Card className={className}>
       <CardHeader className="pb-2">
@@ -147,11 +160,7 @@ const LinearRegressionChart: React.FC<LinearRegressionChartProps> = ({
                 name={yAxisName} 
                 label={{ value: yAxisName, angle: -90, position: 'left' }} 
               />
-              <Tooltip 
-                content={(props) => (
-                  <ChartTooltipContent {...props} labelKey="name" />
-                )}
-              />
+              <Tooltip content={<CustomTooltip />} />
               <Legend />
               <Scatter name="Data Points" data={data} fill="#3b82f6" />
               <Line 
